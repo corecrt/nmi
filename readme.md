@@ -3,7 +3,10 @@
 ## how does this work?
 the windows kernel processes NMI (non maskable interrupt) callbacks before sending them
 this project intercepts this callback processing, analyzes the given trapframes which give us enough information about the stack, to determine whether or not this NMI is reaching our driver.
-```
+then, as KiProcessNMI won't function if the ```IsNmiBeingServiced``` flag is enabled, this flag is based off what the function ```KiCheckForFreezeExecution``` returns.
+what we do is spoof the function which the flag bases its result off, for the NMI to not process itself, without hooking the KiProcessNMI function.
+here's an example of an exception_frame structure, which is the second parameter in the KiProcessNMI function.
+```cpp
 typedef struct _KEXCEPTION_FRAME
 {
   /* 0x0000 */ unsigned __int64 P1Home;
