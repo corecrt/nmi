@@ -2,7 +2,32 @@
 
 ## how does this work?
 the windows kernel processes NMI (non maskable interrupt) callbacks before sending them
-this project intercepts this callback processing, analyzes the given trapframes which give us enough information about the stack, to determine whether or not this NMI is reaching our driver.
+this project intercepts this callback processing, analyzes the given exception frames which give us enough information about the stack, to determine whether or not this NMI is reaching our driver.
+
+the exception frames are stored in a structure close to the CONTEXT structure, which you must be familiar about if you've ever implemented an exception handler of some sorts in your code.
+```cpp
+  contextRecord->Rbp														= trapFrame->Rbp;
+	contextRecord->Rip														= trapFrame->Rip;
+	contextRecord->SegCs													= trapFrame->SegCs;
+	contextRecord->EFlags													= trapFrame->EFlags;
+	contextRecord->Rsp														= trapFrame->HardwareRsp;
+	contextRecord->Rax														= trapFrame->Rax;
+	contextRecord->Rcx														= trapFrame->Rcx;
+	contextRecord->Rdx														= trapFrame->Rdx;
+	contextRecord->R8														= trapFrame->R8;
+	contextRecord->R9														= trapFrame->R9;
+	contextRecord->R10														= trapFrame->R10;
+	contextRecord->R11														= trapFrame->R11;
+
+	contextRecord->Rbx														= exceptionFrame->Rbx;
+	contextRecord->Rdi														= exceptionFrame->Rdi;
+	contextRecord->Rsi														= exceptionFrame->Rsi;
+	contextRecord->R12														= exceptionFrame->R12;
+	contextRecord->R13														= exceptionFrame->R13;
+	contextRecord->R14														= exceptionFrame->R14;
+	contextRecord->R15														= exceptionFrame->R15;
+```
+
 then, as KiProcessNMI won't function if the ```IsNmiBeingServiced``` flag is enabled, this flag is based off what the function ```KiCheckForFreezeExecution``` returns.
 what we do is spoof the function which the flag bases its result off, for the NMI to not process itself, without hooking the KiProcessNMI function.
 here's an example of an exception_frame structure, which is the second parameter in the KiProcessNMI function.
